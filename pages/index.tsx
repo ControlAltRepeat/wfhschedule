@@ -97,8 +97,9 @@ const RotatingSchedule: React.FC = () => {
 
   const generateNewSchedule = useCallback(() => {
     if (validPeople.length > 0) {
+      const shuffledPeople = shuffleArray(validPeople);
       const { schedule: newSchedule, workDaysCount: newWorkDaysCount, minimumMet: newMinimumMet } = 
-        generateSchedule(validPeople, workDays, weeks, daysAtWork, minOfficeAttendance);
+        generateSchedule(shuffledPeople, workDays, weeks, daysAtWork, minOfficeAttendance);
       setSchedule(newSchedule);
       setWorkDaysCount(newWorkDaysCount);
       setMinimumMet(newMinimumMet);
@@ -126,16 +127,21 @@ const RotatingSchedule: React.FC = () => {
   };
 
   const handleAddPerson = () => {
-    setPeople([...people, '']);
-    // No need to update validPeople here as an empty string is not valid
+    setPeople(prevPeople => [...prevPeople, '']);
   };
 
   const handleRemovePerson = (index: number) => {
-    const newPeople = people.filter((_, i) => i !== index);
-    setPeople(newPeople);
-    const newValidPeople = newPeople.filter(person => person.trim() !== '');
-    setValidPeople(newValidPeople);
-    setMinOfficeAttendance(prev => Math.min(prev, newValidPeople.length));
+    setPeople(prevPeople => {
+      const newPeople = prevPeople.filter((_, i) => i !== index);
+      const newValidPeople = newPeople.filter(person => person.trim() !== '');
+      setValidPeople(newValidPeople);
+      setMinOfficeAttendance(prev => Math.min(prev, newValidPeople.length));
+      return newPeople;
+    });
+  };
+
+  const handleReroll = () => {
+    generateNewSchedule();
   };
 
   return (
@@ -182,6 +188,8 @@ const RotatingSchedule: React.FC = () => {
           <span className="ml-2">At Work: {daysAtWork}</span>
         </div>
       </div>
+
+      <Button onClick={handleReroll} className="mb-4">Reroll Schedule</Button>
 
       {!minimumMet && (
         <Alert variant="destructive" className="mb-4">
