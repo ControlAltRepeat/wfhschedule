@@ -6,7 +6,7 @@ import { Slider } from '@/components/ui/slider';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-const shuffleArray = (array) => {
+const shuffleArray = <T,>(array: T[]): T[] => {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
