@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,9 +15,19 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return newArray;
 };
 
-const generateSchedule = (people, workDays, weeks, daysAtWork, minOfficeAttendance) => {
-  const schedule = {};
-  const workDaysCount = {};
+const generateSchedule = (
+  people: string[],
+  workDays: string[],
+  weeks: number,
+  daysAtWork: number,
+  minOfficeAttendance: number
+): { 
+  schedule: Record<string, { atWork: string[], workingFromHome: string[] }>,
+  workDaysCount: Record<string, { atWork: number, workingFromHome: number }>,
+  minimumMet: boolean 
+} => {
+  const schedule: Record<string, { atWork: string[], workingFromHome: string[] }> = {};
+  const workDaysCount: Record<string, { atWork: number, workingFromHome: number }> = {};
   people.forEach(person => workDaysCount[person] = { atWork: 0, workingFromHome: 0 });
 
   const totalWorkDays = weeks * workDays.length;
@@ -74,15 +84,15 @@ const generateSchedule = (people, workDays, weeks, daysAtWork, minOfficeAttendan
   return { schedule, workDaysCount, minimumMet };
 };
 
-const RotatingSchedule = () => {
-  const [people, setPeople] = useState(['', '', '']);
-  const [workDays] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
-  const [weeks, setWeeks] = useState(1);
-  const [daysAtWork, setDaysAtWork] = useState(3);
-  const [minOfficeAttendance, setMinOfficeAttendance] = useState(1);
-  const [schedule, setSchedule] = useState({});
-  const [workDaysCount, setWorkDaysCount] = useState({});
-  const [minimumMet, setMinimumMet] = useState(true);
+const RotatingSchedule: React.FC = () => {
+  const [people, setPeople] = useState<string[]>(['', '', '']);
+  const [workDays] = useState<string[]>(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+  const [weeks, setWeeks] = useState<number>(1);
+  const [daysAtWork, setDaysAtWork] = useState<number>(3);
+  const [minOfficeAttendance, setMinOfficeAttendance] = useState<number>(1);
+  const [schedule, setSchedule] = useState<Record<string, { atWork: string[], workingFromHome: string[] }>>({});
+  const [workDaysCount, setWorkDaysCount] = useState<Record<string, { atWork: number, workingFromHome: number }>>({});
+  const [minimumMet, setMinimumMet] = useState<boolean>(true);
 
   useEffect(() => {
     generateNewSchedule();
@@ -103,7 +113,7 @@ const RotatingSchedule = () => {
     }
   };
 
-  const handleNameChange = (index, name) => {
+  const handleNameChange = (index: number, name: string) => {
     const newPeople = [...people];
     newPeople[index] = name;
     setPeople(newPeople);
@@ -113,7 +123,7 @@ const RotatingSchedule = () => {
     setPeople([...people, '']);
   };
 
-  const handleRemovePerson = (index) => {
+  const handleRemovePerson = (index: number) => {
     const newPeople = people.filter((_, i) => i !== index);
     setPeople(newPeople);
     setMinOfficeAttendance(prev => Math.min(prev, newPeople.length));
