@@ -94,11 +94,7 @@ const RotatingSchedule: React.FC = () => {
   const [workDaysCount, setWorkDaysCount] = useState<Record<string, { atWork: number, workingFromHome: number }>>({});
   const [minimumMet, setMinimumMet] = useState<boolean>(true);
 
-  useEffect(() => {
-    generateNewSchedule();
-  }, [people, weeks, daysAtWork, minOfficeAttendance]);
-
-  const generateNewSchedule = () => {
+  const generateNewSchedule = useCallback(() => {
     const validPeople = people.filter(person => person.trim() !== '');
     if (validPeople.length > 0) {
       const { schedule: newSchedule, workDaysCount: newWorkDaysCount, minimumMet: newMinimumMet } = 
@@ -111,7 +107,11 @@ const RotatingSchedule: React.FC = () => {
       setWorkDaysCount({});
       setMinimumMet(true);
     }
-  };
+  }, [people, workDays, weeks, daysAtWork, minOfficeAttendance]);
+
+  useEffect(() => {
+    generateNewSchedule();
+  }, [generateNewSchedule]);
 
   const handleNameChange = (index: number, name: string) => {
     const newPeople = [...people];
