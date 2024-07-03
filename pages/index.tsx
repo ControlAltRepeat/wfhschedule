@@ -31,8 +31,8 @@ const generateSchedule = (
   people.forEach(person => workDaysCount[person] = { atWork: 0, workingFromHome: 0 });
 
   const totalWorkDays = weeks * workDays.length;
-  const targetDaysAtWork = totalWorkDays * (daysAtWork / 5);
-  const targetDaysWFH = totalWorkDays * ((5 - daysAtWork) / 5);
+  const targetDaysAtWork = Math.round(totalWorkDays * (daysAtWork / 5));
+  const targetDaysWFH = Math.round(totalWorkDays * ((5 - daysAtWork) / 5));
 
   let minimumMet = true;
 
@@ -86,6 +86,7 @@ const generateSchedule = (
 
 const RotatingSchedule: React.FC = () => {
   const [people, setPeople] = useState<string[]>(['', '', '']);
+  const [validPeople, setValidPeople] = useState<string[]>([]);
   const [workDays] = useState<string[]>(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
   const [weeks, setWeeks] = useState<number>(1);
   const [daysAtWork, setDaysAtWork] = useState<number>(3);
@@ -94,12 +95,7 @@ const RotatingSchedule: React.FC = () => {
   const [workDaysCount, setWorkDaysCount] = useState<Record<string, { atWork: number, workingFromHome: number }>>({});
   const [minimumMet, setMinimumMet] = useState<boolean>(true);
 
-  useEffect(() => {
-    generateNewSchedule();
-  }, [people, weeks, daysAtWork, minOfficeAttendance]);
-
-  const generateNewSchedule = () => {
-    const validPeople = people.filter(person => person.trim() !== '');
+  const generateNewSchedule = useCallback(() => {
     if (validPeople.length > 0) {
       const { schedule: newSchedule, workDaysCount: newWorkDaysCount, minimumMet: newMinimumMet } = 
         generateSchedule(validPeople, workDays, weeks, daysAtWork, minOfficeAttendance);
@@ -111,22 +107,35 @@ const RotatingSchedule: React.FC = () => {
       setWorkDaysCount({});
       setMinimumMet(true);
     }
-  };
+  }, [validPeople, workDays, weeks, daysAtWork, minOfficeAttendance]);
+
+  useEffect(() => {
+    if (validPeople.length > 0) {
+      generateNewSchedule();
+    }
+  }, [validPeople, weeks, daysAtWork, minOfficeAttendance, generateNewSchedule]);
 
   const handleNameChange = (index: number, name: string) => {
     const newPeople = [...people];
     newPeople[index] = name;
     setPeople(newPeople);
+
+    // Update valid people list
+    const newValidPeople = newPeople.filter(person => person.trim() !== '');
+    setValidPeople(newValidPeople);
   };
 
   const handleAddPerson = () => {
     setPeople([...people, '']);
+    // No need to update validPeople here as an empty string is not valid
   };
 
   const handleRemovePerson = (index: number) => {
     const newPeople = people.filter((_, i) => i !== index);
     setPeople(newPeople);
-    setMinOfficeAttendance(prev => Math.min(prev, newPeople.length));
+    const newValidPeople = newPeople.filter(person => person.trim() !== '');
+    setValidPeople(newValidPeople);
+    setMinOfficeAttendance(prev => Math.min(prev, newValidPeople.length));
   };
 
   return (
@@ -151,9 +160,9 @@ const RotatingSchedule: React.FC = () => {
             id="minOfficeAttendance"
             type="number"
             value={minOfficeAttendance}
-            onChange={(e) => setMinOfficeAttendance(Math.max(1, Math.min(people.length, parseInt(e.target.value) || 1)))}
+            onChange={(e) => setMinOfficeAttendance(Math.max(1, Math.min(validPeople.length, parseInt(e.target.value) || 1)))}
             min="1"
-            max={people.length}
+            max={validPeople.length}
             className="w-full"
           />
         </div>
